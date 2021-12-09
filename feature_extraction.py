@@ -28,8 +28,7 @@ def isWhitePatch_S(patch, rgbThresh=220, percentage=0.2):
     num_pixels = patch.size
     return True if np.all(np.array(patch) > rgbThresh, axis=(2)).sum() > num_pixels * percentage else False
 
-def small_feature_extraction(slide_name, feature_extractor, tile_dims = [224,224], check_filter = True,):
-    file_path = os.path.join(data_path, slide_name)
+def small_feature_extraction(slide_name, file_path, output_path, feature_extractor, tile_dims = [224,224], check_filter = True,):
     slide = openslide.OpenSlide(file_path)
     index_xy = {}
     slide_x, slide_y = slide.dimensions
@@ -70,9 +69,9 @@ def small_feature_extraction(slide_name, feature_extractor, tile_dims = [224,224
             features = feature_extractor(tile_curr)
             output[index, :] = features.detach().numpy()
             index += 1
-    with open(os.path.join(output_path,'nc1',"{}.npy".format(slide_name)),'wb') as f:
+    with open(os.path.join(output_path,'features',"{}.npy".format(slide_name)),'wb') as f:
         np.save(f, output)
-    f = open(os.path.join(output_path,'c1',"{}.dict".format(slide_name)), "wb")
+    f = open(os.path.join(output_path,'dictionaries',"{}.dict".format(slide_name)), "wb")
     pickle.dump(index_xy, f)
     f.close()
     return output, index_xy
