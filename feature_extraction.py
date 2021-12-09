@@ -54,21 +54,13 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
     print("Post filter tiles: {}".format(post_filter_tiles))
 
     output = np.zeros(shape=(post_filter_tiles, 1024))
-    index = 0
-    for i_x in tqdm(range(num_tiles_x)):
-        for i_y in range(num_tiles_y):
-            curr_x = i_x*tile_dim_x
-            curr_y = i_y*tile_dim_y
-            index_xy.update({index:(curr_x, curr_y)})
-            tile_curr = slide.read_region(location=(curr_x, curr_y), level=1, size = (tile_dim_x, tile_dim_y))
-            tile_curr = np.array(tile_curr)[:,:,0:3]
-            if check_filter:
-                if isBlackPatch_S(tile_curr, rgbThresh=20, percentage=0.05) or isWhitePatch_S(tile_curr, rgbThresh=220, percentage=0.25):
-                    continue # running anyways since overhead is low
-            tile_curr = torch.unsqueeze(torch.tensor(np.transpose(np.array(tile_curr),(2,0,1))),dim=0)/255
-            features = feature_extractor(tile_curr)
-            output[index, :] = features.detach().numpy()
-            index += 1
+    for i in range(post_filter_tiles):
+        curr_x, curr_y = index_xy[i]
+        tile_curr = slide.read_region(location=(curr_x, curr_y), level=1, size=(tile_dim_x, tile_dim_y))
+        tile_curr = np.array(tile_curr)[:, :, 0:3]
+        tile_curr = torch.unsqueeze(torch.tensor(np.transpose(np.array(tile_curr),(2,0,1))),dim=0).cuda()/255
+        features = feature_extractor(tile_curr)
+        output[i, :] = features.detach().numpy()
     with open(os.path.join(output_path,'features',"{}.npy".format(slide_name)),'wb') as f:
         np.save(f, output)
     f = open(os.path.join(output_path,'dictionaries',"{}.dict".format(slide_name)), "wb")
