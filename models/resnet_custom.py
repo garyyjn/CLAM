@@ -119,7 +119,7 @@ def resnet50_baseline(pretrained=False):
     return model
 
 def load_pretrained_weights(model, name):
-    pretrained_dict = model_zoo.load_url(model_urls[name])
+    pretrained_dict = torch.load('/home/ext_yao_gary_mayo_edu/FuseMount/torch_pretrained/resnet50.pth')
     model.load_state_dict(pretrained_dict, strict=False)
     return model
 
