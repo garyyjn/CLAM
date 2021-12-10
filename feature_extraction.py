@@ -39,12 +39,12 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
     total_tiles = (int)(slide_x/tile_dim_x)*(int)(slide_y/tile_dim_y)
     print("Number of tiles: {}".format(total_tiles))
     post_filter_tiles = 0
-    whole_slide_in_mem = np.array(slide.read_region(location=(0,0), level = 1, size = (slide_x, slide_y)))
     for i_x in tqdm(range(num_tiles_x)):
+        curr_x = i_x * tile_dim_x
+        column_read = np.array(slide.read_region(location=(curr_x, 0), level = 1, size = (tile_dim_x, slide_y)))
         for i_y in range(num_tiles_y):
-            curr_x = i_x * tile_dim_x
             curr_y = i_y * tile_dim_y
-            tile_curr = whole_slide_in_mem[curr_x:curr_x+tile_dim_x, curr_y:curr_y+ tile_dim_y,0:3]
+            tile_curr = column_read[0:tile_dim_x, curr_y:curr_y+ tile_dim_y,0:3]
             if check_filter:
                 if isBlackPatch_S(tile_curr, rgbThresh=20, percentage=0.05) or isWhitePatch_S(tile_curr, rgbThresh=220,
                                                                                               percentage=0.25):
@@ -56,7 +56,7 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
 
     #print(index_xy)
     output = np.zeros(shape=(post_filter_tiles, 1024))
-    for i in range(post_filter_tiles):
+    for i in tqdm(range(post_filter_tiles)):
         curr_x, curr_y = index_xy[i]
         tile_curr = slide.read_region(location=(curr_x, curr_y), level=1, size=(tile_dim_x, tile_dim_y))
         tile_curr = np.array(tile_curr)[:, :, 0:3]
