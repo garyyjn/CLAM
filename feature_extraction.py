@@ -5,6 +5,7 @@ from tqdm import tqdm
 import torch
 import os
 import pickle
+from shutil import copyfile, copy, copy2
 
 from models.resnet_custom import ResNet_Baseline, resnet50_baseline
 import openslide
@@ -29,14 +30,16 @@ def isWhitePatch_S(patch, rgbThresh=220, percentage=0.2):
     return True if np.all(np.array(patch) > rgbThresh, axis=(2)).sum() > num_pixels * percentage else False
 
 def small_feature_extraction(slide_name, file_path, output_path, feature_extractor, tile_dims = [224,224], check_filter = True,):
-    slide = openslide.OpenSlide(file_path)
+    copytarget = './tempslide{}'.format(slide_name)
+    copyfile(file_path, copytarget)
+    slide = openslide.OpenSlide(copytarget)
     index_xy = {}
     slide_x, slide_y = slide.dimensions
     print("Working on: {}".format(slide_name))
     print("Whole Slide Dims: {}".format(slide.dimensions))
     tile_dim_x, tile_dim_y = tile_dims
     num_tiles_x, num_tiles_y =  (int)(slide_x/tile_dim_x), (int)(slide_y/tile_dim_y)
-    total_tiles = (int)(slide_x/tile_dim_x)*(int)(slide_y/tile_dim_y)
+    total_tiles = num_tiles_y * num_tiles_x
     print("Number of tiles: {}".format(total_tiles))
     post_filter_tiles = 0
     for i_x in tqdm(range(num_tiles_x)):
@@ -54,7 +57,6 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
             post_filter_tiles += 1
     print("Post filter tiles: {}".format(post_filter_tiles))
 
-    #print(index_xy)
     output = np.zeros(shape=(post_filter_tiles, 1024))
     for i in tqdm(range(post_filter_tiles)):
         curr_x, curr_y = index_xy[i]
@@ -70,4 +72,5 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
     f = open(os.path.join(output_path,'dictionaries',"{}.dict".format(slide_name)), "wb")
     pickle.dump(index_xy, f)
     f.close()
+    os.remove('temp/{}'.format(slide_name))
     return output, index_xy
