@@ -146,8 +146,11 @@ def simple_extraction(slide_name, file_path, output_path, feature_extractor, til
         for i_y in range(num_tiles_y):
             curr_y = i_y * tile_dim_y
             tile_curr = column_read[0:tile_dim_x, curr_y:curr_y+ tile_dim_y,0:3]
-            tile_curr = torch.unsqueeze(torch.tensor(np.transpose(np.array(tile_curr), (2, 0, 1))), dim=0) / 255
+            print(tile_curr.shape)
+            #tile_curr = torch.unsqueeze(torch.tensor(np.transpose(np.array(tile_curr), (2, 0, 1))), dim=0) / 255
             # TODO batch loading
+            tile_curr = torch.tensor(np.array(tile_curr))/255
+            print(tile_curr.shape)
             if torch.cuda.is_available():
                 tile_curr = tile_curr.cuda()
             features = feature_extractor(tile_curr)
