@@ -76,10 +76,13 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
     return output, index_xy
 
 
-def small_feature_extraction(slide_name, file_path, output_path, feature_extractor, tile_dims = [224,224], check_filter = True,):
-    copytarget = './tempslide{}'.format(slide_name)
-    copyfile(file_path, copytarget)
-    slide = openslide.OpenSlide(copytarget)
+def small_feature_extraction(slide_name, file_path, output_path, feature_extractor, tile_dims = [224,224], check_filter = True,copytarget = False):
+    if copytarget:
+        copytarget = './tempslide{}'.format(slide_name)
+        copyfile(file_path, copytarget)
+        slide = openslide.OpenSlide(copytarget)
+    else:
+        slide = openslide.OpenSlide(file_path)
     index_xy = {}
     slide_x, slide_y = slide.dimensions
     print("Working on: {}".format(slide_name))
@@ -122,7 +125,8 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
     f = open(os.path.join(output_path,'dictionaries',"{}.dict".format(slide_name)), "wb")
     pickle.dump(index_xy, f)
     f.close()
-    os.remove(copytarget)
+    if copytarget:
+        os.remove(copytarget)
     return output, index_xy
 
 
