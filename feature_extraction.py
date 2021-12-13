@@ -72,5 +72,5 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
     f = open(os.path.join(output_path,'dictionaries',"{}.dict".format(slide_name)), "wb")
     pickle.dump(index_xy, f)
     f.close()
-    os.remove('temp/{}'.format(slide_name))
+    os.remove(copytarget)
     return output, index_xy
