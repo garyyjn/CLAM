@@ -6,7 +6,7 @@ import torch
 import os
 import pickle
 from shutil import copyfile, copy, copy2
-
+import cupy
 from models.resnet_custom import ResNet_Baseline, resnet50_baseline
 import openslide
 feature_extractor = resnet50_baseline(pretrained=True)
@@ -27,6 +27,7 @@ def isBlackPatch_S(patch, rgbThresh=20, percentage=0.05):
 def isWhitePatch_S(patch, rgbThresh=220, percentage=0.2):
     num_pixels = patch.size
     return True if np.all(np.array(patch) > rgbThresh, axis=(2)).sum() > num_pixels * percentage else False
+
 
 def small_feature_extraction(slide_name, file_path, output_path, feature_extractor, tile_dims = [224,224], check_filter = True,):
     copytarget = './tempslide{}'.format(slide_name)
@@ -49,7 +50,7 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
             tile_curr = column_read[0:tile_dim_x, curr_y:curr_y+ tile_dim_y,0:3]
             if check_filter:
                 if isBlackPatch_S(tile_curr, rgbThresh=20, percentage=0.05) or isWhitePatch_S(tile_curr, rgbThresh=220,
-                                                                                              percentage=0.25):
+                                                                                          percentage=0.25):
                     continue
 
             index_xy.update({post_filter_tiles: (curr_x, curr_y)})
@@ -62,6 +63,7 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
         tile_curr = slide.read_region(location=(curr_x, curr_y), level=1, size=(tile_dim_x, tile_dim_y))
         tile_curr = np.array(tile_curr)[:, :, 0:3]
         tile_curr = torch.unsqueeze(torch.tensor(np.transpose(np.array(tile_curr),(2,0,1))),dim=0)/255
+        #TODO batch loading
         if torch.cuda.is_available():
             tile_curr = tile_curr.cuda()
         features = feature_extractor(tile_curr)
@@ -73,4 +75,94 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
     f.close()
     os.remove(copytarget)
     return output, index_xy
+
+
+def small_feature_extraction(slide_name, file_path, output_path, feature_extractor, tile_dims = [224,224], check_filter = True,):
+    copytarget = './tempslide{}'.format(slide_name)
+    copyfile(file_path, copytarget)
+    slide = openslide.OpenSlide(copytarget)
+    index_xy = {}
+    slide_x, slide_y = slide.dimensions
+    print("Working on: {}".format(slide_name))
+    print("Whole Slide Dims: {}".format(slide.dimensions))
+    tile_dim_x, tile_dim_y = tile_dims
+    num_tiles_x, num_tiles_y =  (int)(slide_x/tile_dim_x), (int)(slide_y/tile_dim_y)
+    total_tiles = num_tiles_y * num_tiles_x
+    print("Number of tiles: {}".format(total_tiles))
+    post_filter_tiles = 0
+    for i_x in tqdm(range(num_tiles_x)):
+        curr_x = i_x * tile_dim_x
+        column_read = np.array(slide.read_region(location=(curr_x, 0), level = 1, size = (tile_dim_x, slide_y)))
+        for i_y in range(num_tiles_y):
+            curr_y = i_y * tile_dim_y
+            tile_curr = column_read[0:tile_dim_x, curr_y:curr_y+ tile_dim_y,0:3]
+            if check_filter:
+                if isBlackPatch_S(tile_curr, rgbThresh=20, percentage=0.05) or isWhitePatch_S(tile_curr, rgbThresh=220,
+                                                                                          percentage=0.25):
+                    continue
+
+            index_xy.update({post_filter_tiles: (curr_x, curr_y)})
+            post_filter_tiles += 1
+    print("Post filter tiles: {}".format(post_filter_tiles))
+
+    output = np.zeros(shape=(post_filter_tiles, 1024))
+    for i in tqdm(range(post_filter_tiles)):
+        curr_x, curr_y = index_xy[i]
+        tile_curr = slide.read_region(location=(curr_x, curr_y), level=1, size=(tile_dim_x, tile_dim_y))
+        tile_curr = np.array(tile_curr)[:, :, 0:3]
+        tile_curr = torch.unsqueeze(torch.tensor(np.transpose(np.array(tile_curr),(2,0,1))),dim=0)/255
+        #TODO batch loading
+        if torch.cuda.is_available():
+            tile_curr = tile_curr.cuda()
+        features = feature_extractor(tile_curr)
+        output[i, :] = features.cpu().detach().numpy()
+    with open(os.path.join(output_path,'features',"{}.npy".format(slide_name)),'wb') as f:
+        np.save(f, output)
+    f = open(os.path.join(output_path,'dictionaries',"{}.dict".format(slide_name)), "wb")
+    pickle.dump(index_xy, f)
+    f.close()
+    os.remove(copytarget)
+    return output, index_xy
+
+
+
+
+def simple_extraction(slide_name, file_path, output_path, feature_extractor, tile_dims = [224,224]):
+    copytarget = './tempslide{}'.format(slide_name)
+    copyfile(file_path, copytarget)
+    slide = openslide.OpenSlide(copytarget)
+    index_xy = {}
+    slide_x, slide_y = slide.dimensions
+    print("Working on: {}".format(slide_name))
+    print("Whole Slide Dims: {}".format(slide.dimensions))
+    tile_dim_x, tile_dim_y = tile_dims
+    num_tiles_x, num_tiles_y =  (int)(slide_x/tile_dim_x), (int)(slide_y/tile_dim_y)
+    total_tiles = num_tiles_y * num_tiles_x
+    print("Number of tiles: {}".format(total_tiles))
+    post_filter_tiles = 0
+    output = np.zeros(shape=(num_tiles_x*num_tiles_y, 1024))
+    for i_x in tqdm(range(num_tiles_x)):
+        curr_x = i_x * tile_dim_x
+        column_read = np.array(slide.read_region(location=(curr_x, 0), level = 1, size = (tile_dim_x, slide_y)))
+        for i_y in range(num_tiles_y):
+            curr_y = i_y * tile_dim_y
+            tile_curr = column_read[0:tile_dim_x, curr_y:curr_y+ tile_dim_y,0:3]
+            tile_curr = torch.unsqueeze(torch.tensor(np.transpose(np.array(tile_curr), (2, 0, 1))), dim=0) / 255
+            # TODO batch loading
+            if torch.cuda.is_available():
+                tile_curr = tile_curr.cuda()
+            features = feature_extractor(tile_curr)
+            output[post_filter_tiles, :] = features.cpu().detach().numpy()
+            index_xy.update({post_filter_tiles: (curr_x, curr_y)})
+            post_filter_tiles += 1
+
+    print("Post filter tiles: {}".format(post_filter_tiles))
+    with open(os.path.join(output_path,'features',"{}.npy".format(slide_name)),'wb') as f:
+        np.save(f, output)
+    f = open(os.path.join(output_path,'dictionaries',"{}.dict".format(slide_name)), "wb")
+    pickle.dump(index_xy, f)
+    f.close()
+    os.remove(copytarget)
+    return output, index_xy
+
 
