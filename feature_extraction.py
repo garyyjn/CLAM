@@ -13,7 +13,6 @@ feature_extractor = resnet50_baseline(pretrained=True)
 data_path = "/Volumes/HwangSSD2/TCGA_BLCA"
 output_path = "/Users/M261759/Documents/GitHub/CLAM/example_bladder_output"#class1/features, class1/dictionary, class2/features, class2/dicitonaru
 annotation_path = ""
-print("fuck")
 def isWhitePatch(patch, satThresh=5):
     patch_hsv = cv2.cvtColor(patch, cv2.COLOR_RGB2HSV)
     return True if np.mean(patch_hsv[:,:,1]) < satThresh else False
@@ -74,3 +73,4 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
     f.close()
     os.remove(copytarget)
     return output, index_xy
+
