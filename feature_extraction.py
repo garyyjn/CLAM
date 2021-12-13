@@ -92,9 +92,11 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
     for i_x in tqdm(range(num_tiles_x)):
         curr_x = i_x * tile_dim_x
         column_read = np.array(slide.read_region(location=(curr_x, 0), level = 1, size = (tile_dim_x, slide_y)))
+        column_read = column_read[:,:,0:3]
+        column_read = np.transpose(column_read,(1,0,2))
         for i_y in range(num_tiles_y):
             curr_y = i_y * tile_dim_y
-            tile_curr = column_read[0:tile_dim_x, curr_y:curr_y+ tile_dim_y,0:3]
+            tile_curr = column_read[0:tile_dim_x, curr_y:curr_y+ tile_dim_y,:]
             if check_filter:
                 if isBlackPatch_S(tile_curr, rgbThresh=20, percentage=0.05) or isWhitePatch_S(tile_curr, rgbThresh=220,
                                                                                           percentage=0.25):
@@ -143,13 +145,18 @@ def simple_extraction(slide_name, file_path, output_path, feature_extractor, til
     for i_x in tqdm(range(num_tiles_x)):
         curr_x = i_x * tile_dim_x
         column_read = np.array(slide.read_region(location=(curr_x, 0), level = 1, size = (tile_dim_x, slide_y)))
+        column_read = column_read[:,:,0:3]
+        column_read = np.transpose(column_read,(1,0,2))
+        print(column_read.shape)
         for i_y in range(num_tiles_y):
             curr_y = i_y * tile_dim_y
-            tile_curr = column_read[0:tile_dim_x, curr_y:curr_y+ tile_dim_y,0:3]
+            tile_curr = column_read[0:tile_dim_x, curr_y:curr_y+ tile_dim_y,:]
             print(tile_curr.shape)
-            #tile_curr = torch.unsqueeze(torch.tensor(np.transpose(np.array(tile_curr), (2, 0, 1))), dim=0) / 255
+            tile_curr = torch.tensor(np.transpose(np.array(tile_curr), (2, 0, 1)))
+            print(tile_curr.shape)
+            tile_curr = torch.unsqueeze(tile_curr, dim=0) / 255
             # TODO batch loading
-            tile_curr = torch.tensor(np.array(tile_curr))/255
+            #tile_curr = torch.tensor(np.array(tile_curr))/255
             print(tile_curr.shape)
             if torch.cuda.is_available():
                 tile_curr = tile_curr.cuda()

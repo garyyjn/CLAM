@@ -20,7 +20,7 @@ if torch.cuda.is_available():
 for filename in tqdm(os.listdir(data_path)):
     if filename.endswith('.svs'):
         full_path = os.path.join(data_path, filename)
-        simple_extraction(filename, full_path, output_path, feature_extractor=feature_extractor)
+        small_feature_extraction(filename, full_path, output_path, feature_extractor=feature_extractor)
 '''
 filename = 'datasets_TCGA_BLCA_TCGA-HQ-A5NE-01Z-00-DX1.8046B606-085B-406F-A8D7-92A3E021020A.svs'
 full_path = os.path.join(data_path, filename)
