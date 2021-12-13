@@ -22,6 +22,6 @@ for filename in tqdm(os.listdir(data_path)):
         full_path = os.path.join(data_path, filename)
         small_feature_extraction(filename, full_path, output_path, feature_extractor=feature_extractor)
 '''
-filename = 'TCGA-ZF-AA4T-01Z-00-DX1.3AC48F6E-01E2-4C20-BEFE-3B4A150DFF67.svs'
+filename = 'TCGA-HQ-A5NE-01Z-00-DX1.8046B606-085B-406F-A8D7-92A3E021020A.svs'
 full_path = os.path.join(data_path, filename)
 small_feature_extraction(filename, full_path, output_path, feature_extractor)

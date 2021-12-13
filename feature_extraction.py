@@ -65,7 +65,7 @@ def small_feature_extraction(slide_name, file_path, output_path, feature_extract
         if torch.cuda.is_available():
             tile_curr = tile_curr.cuda()
         features = feature_extractor(tile_curr)
-        output[i, :] = features.detach().numpy()
+        output[i, :] = features.cpu().detach().numpy()
     with open(os.path.join(output_path,'features',"{}.npy".format(slide_name)),'wb') as f:
         np.save(f, output)
     f = open(os.path.join(output_path,'dictionaries',"{}.dict".format(slide_name)), "wb")
