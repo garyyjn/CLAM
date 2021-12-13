@@ -152,7 +152,11 @@ def small_feature_extraction_high_mem(slide_name, file_path, output_path, featur
     total_tiles = num_tiles_y * num_tiles_x
     print("Number of tiles: {}".format(total_tiles))
     post_filter_tiles = 0
-    whole_slide_read = np.array(slide.read_region(location=(0,0), level = 1, size = (slide_x, slide_y)))
+    try:
+        whole_slide_read = np.array(slide.read_region(location=(0,0), level = 1, size = (slide_x, slide_y)))
+    except(MemoryError):
+        print("out of memory")
+        return
     whole_slide_read = whole_slide_read[:,:,0:3]
     for i_x in tqdm(range(num_tiles_x)):
         for i_y in range(num_tiles_y):
