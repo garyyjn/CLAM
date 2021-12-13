@@ -6,7 +6,6 @@ import torch
 import os
 import pickle
 from shutil import copyfile, copy, copy2
-import cupy
 from models.resnet_custom import ResNet_Baseline, resnet50_baseline
 import openslide
 feature_extractor = resnet50_baseline(pretrained=True)
