@@ -3,8 +3,9 @@ import os
 from feature_extraction import small_feature_extraction, simple_extraction, small_feature_extraction_high_mem, small_feature_extraction_center
 from tqdm import tqdm
 import torch
+from os.path import exists
 
-local = True
+local = False
 if local:
     data_path = '/Users/M261759/Documents/GitHub/CLAM/example_bladder_data'
     output_path = '/Users/M261759/Documents/GitHub/CLAM/example_bladder_output'
@@ -19,6 +20,9 @@ if torch.cuda.is_available():
     feature_extractor = feature_extractor.cuda()
 for filename in tqdm(os.listdir(data_path)):
     if filename.endswith('.svs'):
+        if exists(os.join(output_path,'dictionaries',filename,'.dict')):
+            print('{} processed, skipping'.format(filename))
+            continue
         full_path = os.path.join(data_path, filename)
         small_feature_extraction_center(filename, full_path, output_path, feature_extractor=feature_extractor)
 '''
