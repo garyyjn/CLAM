@@ -208,9 +208,11 @@ def small_feature_extraction_center(slide_name, file_path, output_path, feature_
     num_tiles_x, num_tiles_y =  (int)(slide_x/tile_dim_x), (int)(slide_y/tile_dim_y)
     total_tiles = num_tiles_y * num_tiles_x
     if num_tiles_y > 100 and num_tiles_y > 100:
-        start_x = slide_x/2 - 50*tile_dim_x
-        start_y = slide_y/2 - 50*tile_dim_y
-        read_whole =np.array(slide.read_region(location=(start_x,start_y), level = 1, size = (100*tile_dim_x, 100* tile_dim_y)))[:,:,0:3]
+        start_x = (int)(slide_x/2 - 50*tile_dim_x)
+        start_y = (int)(slide_y/2 - 50*tile_dim_y)
+        #print(start_x,start_y)
+        #print(100*tile_dim_x, 100* tile_dim_y)
+        read_whole = np.array(slide.read_region(location=(start_x,start_y), level = 1, size = (100*tile_dim_x, 100* tile_dim_y)))[:,:,0:3]
         post_filter_tiles = 0
         for i_x in tqdm(range(100)):
             for i_y in tqdm(range(100)):

@@ -4,7 +4,7 @@ from feature_extraction import small_feature_extraction, simple_extraction, smal
 from tqdm import tqdm
 import torch
 
-local = False
+local = True
 if local:
     data_path = '/Users/M261759/Documents/GitHub/CLAM/example_bladder_data'
     output_path = '/Users/M261759/Documents/GitHub/CLAM/example_bladder_output'
