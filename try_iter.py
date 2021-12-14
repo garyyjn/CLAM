@@ -9,7 +9,7 @@ if local:
     data_path = '/Users/M261759/Documents/GitHub/CLAM/example_bladder_data'
     output_path = '/Users/M261759/Documents/GitHub/CLAM/example_bladder_output'
 else:
-    data_path = '/home/ext_yao_gary_mayo_edu/FuseMount/datasets/TCGA_BLCA'
+    data_path = '/home/ext_yao_gary_mayo_edu/mount/datasets/TCGA_BLCA'
     output_path = './extraction_output'
 from models.resnet_custom import ResNet_Baseline, resnet50_baseline
 
